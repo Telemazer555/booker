@@ -1,4 +1,4 @@
-from src.core import ItemApiClient
+from src.api_manager import ItemApiClient
 from src.data_models import UserSchema2, UpdateBookingSchema
 
 

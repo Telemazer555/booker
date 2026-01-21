@@ -1,7 +1,7 @@
 import pytest
 import requests
 from faker import Faker
-from src.core import ItemApiClient
+from src.api_manager import ItemApiClient
 from src.data_models import BASE_URL, JSON_BODY, HEADERS
 from src.scenarios import ItemScenarios
 
