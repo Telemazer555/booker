@@ -1,9 +1,9 @@
 import pytest
 import requests
 from faker import Faker
-from src.api_manager import ItemApiClient
-from src.data_models import BASE_URL, JSON_BODY, HEADERS
-from src.scenarios import ItemScenarios
+from api_manager.api_manager import ItemApiClient
+from data_models.data_models import BASE_URL, JSON_BODY, HEADERS
+from scenarios.scenarios import ItemScenarios
 
 fake = Faker()
 
