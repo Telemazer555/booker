@@ -1,4 +1,5 @@
 from data_models.data_models import BookingResponseData
+# print()
 class TestBookingScenarios:
 
     def test_get_and_verify(self, item_scenarios, booking_data):
