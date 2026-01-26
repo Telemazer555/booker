@@ -1,7 +1,9 @@
 from typing import Type
+
 import pytest
 from pydantic import BaseModel, ValidationError
 from requests import Response
+
 from data_models.data_models import BASE_URL
 
 
