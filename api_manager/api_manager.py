@@ -38,6 +38,13 @@ class ItemApiClient:
 
         return response
 
+    def create_item2(self, item_data):
+        response = self.auth_session.post(
+            f"{self.base_url}/booking",
+            json=item_data.model_dump()
+        )
+        return response
+
     def update_item(self, item_id, upd_item_data):
         """Отправляет запрос на обновление item."""
         response = self.auth_session.put(f"{self.base_url}/booking/{item_id}", json=upd_item_data)
