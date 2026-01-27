@@ -1,4 +1,4 @@
-from data_models.data_models import BookingResponseData
+from src.data_models.data_models import BookingResponseData
 
 class TestBookingScenarios:
 
