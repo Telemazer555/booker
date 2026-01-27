@@ -2,9 +2,8 @@ import pytest
 import requests
 from faker import Faker
 from api_manager.api_manager import ItemApiClient
-from data_models.data_models import BASE_URL, JSON_BODY, HEADERS
+from data_models.data_models import BASE_URL, JSON_BODY, HEADERS, BookingResponseData
 from scenarios.scenarios import ItemScenarios
-
 fake = Faker()
 
 
@@ -57,3 +56,7 @@ def api_client(auth_session):
 @pytest.fixture
 def item_scenarios(api_client):
     return ItemScenarios(api_client)
+
+@pytest.fixture
+def booking_data3():
+    return BookingResponseData()
