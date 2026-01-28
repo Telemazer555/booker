@@ -1,16 +1,16 @@
-from typing import Type
-
 import pytest
+
 from pydantic import BaseModel, ValidationError
 from requests import Response
+from typing import Type
 
-from data_models.data_models import BASE_URL
+from src.data_models.data_models import Credentials
 
 
 class ItemApiClient:
     def __init__(self, auth_session):
         self.auth_session = auth_session
-        self.base_url = BASE_URL  # Можно также передавать в конструктор, если он может меняться
+        self.base_url = Credentials.BASE_URL  # Можно также передавать в конструктор, если он может меняться
 
     def get_items(self):
         """Отправляет запрос на получение списка items."""
@@ -30,24 +30,15 @@ class ItemApiClient:
         return response
 
     def create_item(self, item_data):
-        """Отправляет запрос на создание item."""
-        response = self.auth_session.post(f"{self.base_url}/booking", json=item_data)
-        # Базовая проверка, что запрос успешен и мы можем парсить JSON
-        if response.status_code not in (200, 201):
-            response.raise_for_status()  # Выбросит HTTPError для плохих статусов
-
-        return response
-
-    def create_item2(self, item_data):
         response = self.auth_session.post(
             f"{self.base_url}/booking",
             json=item_data.model_dump()
         )
-        return response
+        return response  # возвращаем response в model_dump
 
-    def update_item(self, item_id, upd_item_data):
+    def update_item(self, item_id, item_data):
         """Отправляет запрос на обновление item."""
-        response = self.auth_session.put(f"{self.base_url}/booking/{item_id}", json=upd_item_data)
+        response = self.auth_session.put(f"{self.base_url}/booking/{item_id}", json=item_data.model_dump())
         if response.status_code != 200:
             response.raise_for_status()
         return response
@@ -56,7 +47,7 @@ class ItemApiClient:
         """Отправляет запрос на удаление item."""
         response = self.auth_session.delete(f"{self.base_url}/booking/{item_id}")
 
-        if response.status_code != 200:  # В REST  для DELETE часто возвращают 204 No Content или 200 OK
+        if response.status_code != 200:  # В REST для DELETE часто возвращают 204 No Content или 200 OK
             response.raise_for_status()
         # Для DELETE часто нечего возвращать из тела, либо можно вернуть статус-код или сам response
         return response  # или response.status_code

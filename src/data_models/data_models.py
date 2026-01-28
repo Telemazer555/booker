@@ -1,18 +1,21 @@
 from pydantic import BaseModel, Field
 from typing import Optional
+from faker import Faker
+
 import json
 import os
 import dotenv
-from faker import Faker
 
 fake = Faker()
-
 dotenv.load_dotenv()
-HEADERS = os.environ.get('HEADERS')
-HEADERS = json.loads(HEADERS)
-BASE_URL = os.environ.get('BASE_URL')
-JSON_BODY = os.environ.get('JSON_BODY')
-JSON_BODY = json.loads(JSON_BODY)
+
+
+class Credentials:
+    HEADERS = os.environ.get('HEADERS')
+    HEADERS = json.loads(HEADERS)
+    BASE_URL = os.environ.get('BASE_URL')
+    JSON_BODY = os.environ.get('JSON_BODY')
+    JSON_BODY = json.loads(JSON_BODY)
 
 
 class BookingDates(BaseModel):
