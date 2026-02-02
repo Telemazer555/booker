@@ -1,18 +1,20 @@
-from src.api_manager.api_manager import ItemApiClient
+from src.api_manager.api_manager import ItemApiClient,Validator
 from src.data_models.data_models import UserSchema2, UpdateBookingSchema
 
 
 class ItemScenarios:
     def __init__(self, api_client: ItemApiClient):  # Типизация для ясности
         self.api_client = api_client
-
+        self.validator = Validator()
     def create_item_and_immediately_delete(self, item_data):
         """
         Сценарий: создать item, проверить его ответ через валидатор и сразу же его удалить.
         Возвращает ID созданного и удаленного item.
         """
         created_item_data = self.api_client.create_item(item_data)
-        self.api_client.validate_response(created_item_data, expected_data=created_item_data.json(), model=UserSchema2)
+
+        # self.api_client.validate_response(created_item_data, expected_data=created_item_data.json(), model=UserSchema2)убрал
+        self.validator.validate_response(created_item_data, expected_data=created_item_data.json(), model=UserSchema2)
         item_id = created_item_data.json().get("bookingid")
         self.api_client.get_item(item_id)
         print(
@@ -30,13 +32,15 @@ class ItemScenarios:
 
     def update_item_and_verify_changes_and_delete(self, item_data, upd_item_data):
         create_booking = self.api_client.create_item(item_data)
-        self.api_client.validate_response(create_booking, expected_data=create_booking.json(), model=UserSchema2)
+        # self.api_client.validate_response(create_booking, expected_data=create_booking.json(), model=UserSchema2)убрал
+        self.validator.validate_response(create_booking, expected_data=create_booking.json(), model=UserSchema2)
         uuid = create_booking.json()['bookingid']
         firstname = create_booking.json()['booking']['firstname']
         lastname = create_booking.json()['booking']['lastname']
 
         up_booking_data = self.api_client.update_item(uuid, upd_item_data)
-        self.api_client.validate_response(up_booking_data, expected_data=up_booking_data.json(),
+        # self.api_client.validate_response(up_booking_data, expected_data=up_booking_data.json(),убрал
+        self.validator.validate_response(up_booking_data, expected_data=up_booking_data.json(),
                                           model=UpdateBookingSchema)
 
         up_firstname = up_booking_data.json()['firstname']
