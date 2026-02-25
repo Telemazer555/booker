@@ -1,0 +1,102 @@
+import pytest
+import requests
+import httpx
+import pytest_asyncio
+import aiohttp
+from src.api_manager.api_manager import ItemApiClient, AsyncItemApiClient
+from src.data_models.data_models import Credentials
+from src.scenarios.scenarios import ItemScenarios, ItemScenariosAsync
+
+
+@pytest.fixture(scope='session')
+def auth_session(request):
+    param = request.param
+    # client = Credentials.CLIENT
+    if param == "httpx":
+        session = httpx.Client(verify=False)
+    elif param == "requests":
+        session = requests.session()
+        session.verify = False
+    else:
+        raise ValueError(f"Неизвестный клиент: {param}")
+    session.headers.update(Credentials.HEADERS)
+    auth_response = session.post(f"{Credentials.BASE_URL}/auth", json=Credentials.JSON_BODY)
+    assert auth_response.status_code == 200, "Ошибка авторизации, статус код не 200"
+    token = auth_response.json().get("token")
+    assert token is not None, "Токен не найден в ответе"
+    session.headers.update({"Cookie": f"token={token}"})
+    return session
+
+
+@pytest.fixture
+def api_client(auth_session):
+    return ItemApiClient(auth_session)
+
+
+@pytest.fixture
+def item_scenarios(api_client):
+    return ItemScenarios(api_client)
+
+
+##########################################################################################
+"""ASYNC_httpx"""
+# @pytest_asyncio.fixture
+# async def as_auth_session():
+#     async with httpx.AsyncClient(
+#             headers=Credentials.HEADERS,
+#             verify=False,
+#             timeout=httpx.Timeout(connect=20.0, read=300.0, write=20.0, pool=20.0),
+#     ) as session:
+#         response = await session.post(
+#             f"{Credentials.BASE_URL}/auth",
+#             json=Credentials.JSON_BODY
+#         )
+#
+#         token = response.json()["token"]
+#         session.headers.update({"Cookie": f"token={token}"})
+#
+#         yield session
+#
+
+@pytest_asyncio.fixture
+async def as_auth_session():
+    client = Credentials.AS_CLIENT
+    if client == "aiohttp":
+        connector = aiohttp.TCPConnector(ssl=False)
+        async with aiohttp.ClientSession(
+                headers=Credentials.HEADERS,
+                connector=connector
+        ) as session:
+            async with session.post(
+                    f"{Credentials.BASE_URL}/auth",
+                    json=Credentials.JSON_BODY
+            ) as response:
+                data = await response.json()
+                token = data["token"]
+
+            # Обновляем заголовки сессии
+            session._default_headers.update({"Cookie": f"token={token}"})
+            yield session  # <-- ВАЖНО: yield здесь
+
+    elif client == "httpx":
+        async with httpx.AsyncClient(
+                headers=Credentials.HEADERS,
+                verify=False,
+                timeout=httpx.Timeout(connect=20.0, read=300.0, write=20.0, pool=20.0),
+        ) as session:
+            response = await session.post(f"{Credentials.BASE_URL}/auth", json=Credentials.JSON_BODY)
+            token = response.json()["token"]
+            session.headers.update({"Cookie": f"token={token}"})
+            yield session
+
+    else:
+        raise ValueError(f"Неизвестный клиент: {client}")
+
+@pytest_asyncio.fixture
+async def as_api_client(as_auth_session):
+    return AsyncItemApiClient(as_auth_session)
+
+
+@pytest_asyncio.fixture
+async def as_item_scenarios(as_api_client):
+    return ItemScenariosAsync(as_api_client)
