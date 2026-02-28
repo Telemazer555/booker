@@ -3,15 +3,46 @@ import requests
 import httpx
 import pytest_asyncio
 import aiohttp
+
 from src.api_manager.api_manager import ItemApiClient, AsyncItemApiClient
 from src.data_models.data_models import Credentials
 from src.scenarios.scenarios import ItemScenarios, ItemScenariosAsync
 
+##########################################################################################
+"""Запуск тестов через флags: --client httpx или --client aiohttp или --client requests"""
+
+
+def pytest_addoption(parser):
+    parser.addoption(
+        "--client",
+        action="store",
+        default="httpx",
+        choices=["httpx", "requests", "aiohttp"],
+        help="""
+            Выбор HTTP клиента для тестов:
+            - httpx: для синхронных и асинхронных тестов
+            - requests: только для синхронных тестов
+            - aiohttp: только для асинхронных тестов
+            По умолчанию: httpx
+            """
+    )
+
+
+@pytest.fixture(autouse=True, scope="session")
+def set_client(request):
+    client = request.config.getoption("--client")
+    Credentials.CLIENT = client
+    return client
+
+
+##########################################################################################
+"""SYNC"""
+
 
 @pytest.fixture(scope='session')
-def auth_session(request):
-    param = request.param
-    # client = Credentials.CLIENT
+def auth_session(set_client):
+    param = set_client
+    print(f"\n🔧 Запуск с клиентом: {param}")
     if param == "httpx":
         session = httpx.Client(verify=False)
     elif param == "requests":
@@ -39,29 +70,13 @@ def item_scenarios(api_client):
 
 
 ##########################################################################################
-"""ASYNC_httpx"""
-# @pytest_asyncio.fixture
-# async def as_auth_session():
-#     async with httpx.AsyncClient(
-#             headers=Credentials.HEADERS,
-#             verify=False,
-#             timeout=httpx.Timeout(connect=20.0, read=300.0, write=20.0, pool=20.0),
-#     ) as session:
-#         response = await session.post(
-#             f"{Credentials.BASE_URL}/auth",
-#             json=Credentials.JSON_BODY
-#         )
-#
-#         token = response.json()["token"]
-#         session.headers.update({"Cookie": f"token={token}"})
-#
-#         yield session
-#
+"""ASYNC"""
+
 
 @pytest_asyncio.fixture
-async def as_auth_session():
-    client = Credentials.AS_CLIENT
-    if client == "aiohttp":
+async def as_auth_session(set_client):
+    param = set_client
+    if param == "aiohttp":
         connector = aiohttp.TCPConnector(ssl=False)
         async with aiohttp.ClientSession(
                 headers=Credentials.HEADERS,
@@ -73,12 +88,10 @@ async def as_auth_session():
             ) as response:
                 data = await response.json()
                 token = data["token"]
-
-            # Обновляем заголовки сессии
             session._default_headers.update({"Cookie": f"token={token}"})
-            yield session  # <-- ВАЖНО: yield здесь
+            yield session
 
-    elif client == "httpx":
+    elif param == "httpx":
         async with httpx.AsyncClient(
                 headers=Credentials.HEADERS,
                 verify=False,
@@ -90,7 +103,8 @@ async def as_auth_session():
             yield session
 
     else:
-        raise ValueError(f"Неизвестный клиент: {client}")
+        raise ValueError(f"Неизвестный клиент: {param}")
+
 
 @pytest_asyncio.fixture
 async def as_api_client(as_auth_session):

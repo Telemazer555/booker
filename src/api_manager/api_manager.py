@@ -54,55 +54,59 @@ class AsyncItemApiClient:
         self.async_auth_session = async_auth_session
         self.base_url = Credentials.BASE_URL
 
-    #
     async def as_get_items(self) -> Response:
         response = await self.async_auth_session.get(f"{self.base_url}/booking/")
-        if response.status_code != 200:
-            response.raise_for_status()
-        return response
-
-    async def as_get_items_aiohttp(self) -> Response:
-        response = await self.async_auth_session.get(f"{self.base_url}/booking/")
-        if response.status != 200:
-            response.raise_for_status()
-        return response
-
-    async def as_get_items_aiohttp2(self) -> Response:
-        response = await self.async_auth_session.get(f"{self.base_url}/booking/")
-        if Credentials.AS_CLIENT == "aiohttp":
+        if Credentials.CLIENT == "aiohttp":
             if response.status != 200:
                 response.raise_for_status()
-        elif Credentials.AS_CLIENT == "httpx":
+        elif Credentials.CLIENT == "httpx":
             if response.status_code != 200:
                 response.raise_for_status()
         return response
 
     async def as_get_item(self, item_id: int) -> Response:
         response = await self.async_auth_session.get(f"{self.base_url}/booking/{item_id}")
-        if response.status_code != 200:
-            response.raise_for_status()
+        if Credentials.CLIENT == "aiohttp":
+            if response.status != 200:
+                response.raise_for_status()
+        elif Credentials.CLIENT == "httpx":
+            if response.status_code != 200:
+                response.raise_for_status()
         return response
 
     async def as_create_item(self, item_data: BaseModel) -> Response:
         response = await  self.async_auth_session.post(f"{self.base_url}/booking", json=item_data.model_dump())
-        if response.status_code != 200:
-            response.raise_for_status()
+        if Credentials.CLIENT == "aiohttp":
+            if response.status != 200:
+                response.raise_for_status()
+        elif Credentials.CLIENT == "httpx":
+            if response.status_code != 200:
+                response.raise_for_status()
         return response
 
     async def as_update_item(self, item_id: int, item_data: BaseModel) -> Response:
         response = await self.async_auth_session.put(f"{self.base_url}/booking/{item_id}", json=item_data.model_dump())
-        if response.status_code != 200:
-            response.raise_for_status()
+        if Credentials.CLIENT == "aiohttp":
+            if response.status != 200:
+                response.raise_for_status()
+        elif Credentials.CLIENT == "httpx":
+            if response.status_code != 200:
+                response.raise_for_status()
         return response
 
     async def as_delete_item(self, item_id: int) -> Response:
         response = await self.async_auth_session.delete(f"{self.base_url}/booking/{item_id}")
-        if response.status_code != 200:
-            response.raise_for_status()
+        if Credentials.CLIENT == "aiohttp":
+            if response.status != 200:
+                response.raise_for_status()
+        elif Credentials.CLIENT == "httpx":
+            if response.status_code != 200:
+                response.raise_for_status()
         return response
 
 
 class Validator:
+
     def validate_response(self, response: Response,
                           model: Type[BaseModel],
                           expected_status: int = 200,
@@ -119,7 +123,6 @@ class Validator:
         except ValidationError as e:
             pytest.fail(f"Pydantic валидация не прошла:\n{e}")
         if expected_data:
-            # Обернём данные в такую же модель для сравнения
             expected_model = model(**expected_data)
             if parsed.model_dump(exclude_unset=True) != expected_model.model_dump(exclude_unset=True):
                 pytest.fail(
@@ -128,4 +131,29 @@ class Validator:
                     f"Actual:   {parsed.model_dump()}"
                 )
 
+        return parsed
+
+    async def validate_response_aiohttp(self, response: Response,
+                                        model: Type[BaseModel],
+                                        expected_status: int = 200,
+                                        expected_data: dict | None = None
+                                        ) -> BaseModel:
+        if response.status != expected_status:
+            raise ValueError(f"Expected status {expected_status}, got {response.status}")
+        try:
+            data = await response.json()
+        except Exception as e:
+            pytest.fail(f"Ошибка парсинга JSON: {e}\nResponse: {response.text}")
+        try:
+            parsed = model(**data)
+        except ValidationError as e:
+            pytest.fail(f"Pydantic валидация не прошла:\n{e}")
+        if expected_data:
+            expected_model = model(**expected_data)
+            if parsed.model_dump(exclude_unset=True) != expected_model.model_dump(exclude_unset=True):
+                pytest.fail(
+                    f"Данные ответа не совпадают с ожидаемыми:\n"
+                    f"Expected: {expected_model.model_dump()}\n"
+                    f"Actual:   {parsed.model_dump()}"
+                )
         return parsed

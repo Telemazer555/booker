@@ -1,7 +1,6 @@
 from pydantic import BaseModel, Field
 from typing import Optional
 from faker import Faker
-from enum import Enum
 
 import json
 import os
@@ -12,8 +11,7 @@ dotenv.load_dotenv()
 
 
 class Credentials:
-    CLIENT = os.environ.get('CLIENT')
-    AS_CLIENT = os.environ.get('AS_CLIENT')
+    CLIENT = None
     HEADERS = os.environ.get('HEADERS')
     HEADERS = json.loads(HEADERS)
     BASE_URL = os.environ.get('BASE_URL')
@@ -66,10 +64,3 @@ class UpdateBookingSchema(BaseBookingSchema):
     depositpaid: bool
     bookingdates: BookingDates
     additionalneeds: Optional[str] = None
-
-
-class Clients(Enum):
-    REQUESTS = 'requests'
-    HTTPX = 'httpx'
-    ASYNC_HTTPX = 'httpx'
-    ASYNC_AIOHTTP = 'aiohttp'
