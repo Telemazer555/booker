@@ -157,3 +157,29 @@ class Validator:
                     f"Actual:   {parsed.model_dump()}"
                 )
         return parsed
+
+    # async def validate_response_aiohttp(self, response: Response,
+    #                                     model: Type[BaseModel],
+    #                                     expected_status: int = 200,
+    #                                     expected_data: dict | None = None
+    #                                     ) -> BaseModel:
+    #
+    #     if response.status != expected_status:
+    #         raise ValueError(f"Expected status {expected_status}, got {response.status}")
+    #     try:
+    #         data = await response.json()
+    #     except Exception as e:
+    #         pytest.fail(f"Ошибка парсинга JSON: {e}\nResponse: {response.text}")
+    #     try:
+    #         parsed = model(**data)
+    #     except ValidationError as e:
+    #         pytest.fail(f"Pydantic валидация не прошла:\n{e}")
+    #     if expected_data:
+    #         expected_model = model(**expected_data)
+    #         if parsed.model_dump(exclude_unset=True) != expected_model.model_dump(exclude_unset=True):
+    #             pytest.fail(
+    #                 f"Данные ответа не совпадают с ожидаемыми:\n"
+    #                 f"Expected: {expected_model.model_dump()}\n"
+    #                 f"Actual:   {parsed.model_dump()}"
+    #             )
+    #     return parsed

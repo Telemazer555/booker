@@ -77,10 +77,17 @@ def item_scenarios(api_client):
 async def as_auth_session(set_client):
     param = set_client
     if param == "aiohttp":
-        connector = aiohttp.TCPConnector(ssl=False)
+        connector = aiohttp.TCPConnector(
+            ssl=False,
+            force_close=True,  # Принудительно закрывать соединения
+            enable_cleanup_closed=True  # Очищать закрытые соединения
+        )
+
+        # Используем ClientSession с connector
         async with aiohttp.ClientSession(
                 headers=Credentials.HEADERS,
-                connector=connector
+                connector=connector,
+                trust_env=True  # Доверять переменным окружения
         ) as session:
             async with session.post(
                     f"{Credentials.BASE_URL}/auth",
@@ -88,6 +95,8 @@ async def as_auth_session(set_client):
             ) as response:
                 data = await response.json()
                 token = data["token"]
+
+            # Обновляем заголовки
             session._default_headers.update({"Cookie": f"token={token}"})
             yield session
 

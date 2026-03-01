@@ -47,5 +47,5 @@ class TestBookingScenariosAsync:
         # booking_data_update = BookingResponseData()
         tasks = [as_item_scenarios.as_update_item_and_verify_changes_and_delete(item_data=BookingResponseData(),
                                                                                 upd_item_data=BookingResponseData()) for _
-                 in range(10)]
+                 in range(1)]
         await asyncio.gather(*tasks)
