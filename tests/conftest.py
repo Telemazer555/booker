@@ -8,9 +8,6 @@ from src.api_manager.api_manager import ItemApiClient, AsyncItemApiClient
 from src.data_models.data_models import Credentials
 from src.scenarios.scenarios import ItemScenarios, ItemScenariosAsync
 
-##########################################################################################
-"""Запуск тестов через флags: --client httpx или --client aiohttp или --client requests"""
-
 
 def pytest_addoption(parser):
     parser.addoption(
