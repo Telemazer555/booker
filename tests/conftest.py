@@ -3,7 +3,7 @@ import requests
 import httpx
 import pytest_asyncio
 import aiohttp
-
+import asyncio
 from src.api_manager.api_manager import ItemApiClient, AsyncItemApiClient
 from src.data_models.data_models import Credentials
 from src.scenarios.scenarios import ItemScenarios, ItemScenariosAsync
@@ -120,3 +120,50 @@ async def as_api_client(as_auth_session):
 @pytest_asyncio.fixture
 async def as_item_scenarios(as_api_client):
     return ItemScenariosAsync(as_api_client)
+
+
+@pytest.fixture
+def booking_factory(item_scenarios):
+    created_ids = []
+
+    def _create(item_data):
+        response = item_scenarios.api_client.create_item(item_data)
+        data = response.json()
+        booking_id = data["bookingid"]
+
+        created_ids.append(booking_id)
+        return data
+
+    yield _create
+
+    # cleanup
+    for booking_id in created_ids:
+        try:
+            item_scenarios.api_client.delete_item(booking_id)
+            print(f"\n🧹 [sync] удалён {booking_id}")
+        except Exception as e:
+            print(f"\n⚠️ [sync] ошибка удаления {booking_id}: {e}")
+
+
+@pytest_asyncio.fixture
+async def booking_factory_async(as_item_scenarios):
+    created_ids = []
+
+    async def _create(item_data):
+        response = await as_item_scenarios.api_client.as_create_item(item_data)
+        data = await as_item_scenarios.api_client.extract_response2(response)
+
+        created_ids.append(data["bookingid"])
+        return data
+
+    yield _create
+
+    # 🚀 ПАРАЛЛЕЛЬНЫЙ CLEANUP
+    async def delete_one(booking_id):
+        try:
+            await as_item_scenarios.api_client.as_delete_item(booking_id)
+            print(f"\n🧹 [async] удалён {booking_id}")
+        except Exception as e:
+            print(f"\n⚠️ [async] ошибка удаления {booking_id}: {e}")
+
+    await asyncio.gather(*[delete_one(i) for i in created_ids])
