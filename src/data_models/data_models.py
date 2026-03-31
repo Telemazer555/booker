@@ -153,48 +153,43 @@ async def validate_response_as(
         expected_data: dict | None = None
 ) -> BaseModel:
     # определяем тип response и получаем данные
-    if hasattr(response, 'status') and hasattr(response, 'json'):
+    if hasattr(response, 'status') and hasattr(response, 'text'):
         # aiohttp ClientResponse
         status = response.status
         try:
-            data = await response.json() if callable(getattr(response, 'json', None)) else response
+            text = await response.text()
+            data = json.loads(text) if text else {}
         except Exception as e:
             pytest.fail(f"Ошибка парсинга JSON из aiohttp response: {e}")
 
-    elif hasattr(response, 'status_code') and hasattr(response, 'json'):
+    elif hasattr(response, 'status_code') and hasattr(response, 'text'):
         # httpx Response
         status = response.status_code
         try:
-            data = response.json() if callable(getattr(response, 'json', None)) else response
+            text = response.text
+            data = json.loads(text) if text else {}
         except Exception as e:
             pytest.fail(f"Ошибка парсинга JSON из httpx response: {e}")
-
     elif isinstance(response, dict):
         # если response уже словарь
-        status = expected_status  # или нужно как-то получить статус из словаря?
+        status = expected_status
         data = response
-
     else:
         raise TypeError(f"Неподдерживаемый тип response: {type(response)}")
-
     # проверка статуса
     if status != expected_status:
         pytest.fail(f"Expected status {expected_status}, got {status}")
-
     # Pydantic валидация
     try:
         parsed = model(**data)
     except ValidationError as e:
         pytest.fail(f"Pydantic валидация не прошла:\n{e}")
-
     # сравнение ожидаемых данных
     if expected_data:
         expected_model = model(**expected_data)
-
         # Сравниваем только те поля, которые есть в expected_data
         parsed_dict = parsed.model_dump(exclude_unset=True)
         expected_dict = expected_model.model_dump(exclude_unset=True)
-
         # Проверяем только указанные поля
         for key in expected_data.keys():
             if key not in parsed_dict or parsed_dict[key] != expected_dict.get(key):
@@ -203,5 +198,4 @@ async def validate_response_as(
                     f"Expected: {expected_dict.get(key)}\n"
                     f"Actual:   {parsed_dict.get(key)}"
                 )
-
     return parsed
