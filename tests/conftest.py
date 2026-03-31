@@ -128,8 +128,9 @@ def booking_factory(item_scenarios):
 
     def _create(item_data):
         response = item_scenarios.api_client.create_item(item_data)
-        data = response.json()
-        booking_id = data["bookingid"]
+        data_js = response.json()
+        data = response
+        booking_id = data_js["bookingid"]
 
         created_ids.append(booking_id)
         return data
@@ -140,9 +141,9 @@ def booking_factory(item_scenarios):
     for booking_id in created_ids:
         try:
             item_scenarios.api_client.delete_item(booking_id)
-            print(f"\n🧹 [sync] удалён {booking_id}")
+            print(f"\n [sync] удалён {booking_id}")
         except Exception as e:
-            print(f"\n⚠️ [sync] ошибка удаления {booking_id}: {e}")
+            print(f"\n️ [sync] ошибка удаления {booking_id}: {e}")
 
 
 @pytest_asyncio.fixture
@@ -151,14 +152,14 @@ async def booking_factory_async(as_item_scenarios):
 
     async def _create(item_data):
         response = await as_item_scenarios.api_client.as_create_item(item_data)
-        data = await as_item_scenarios.api_client.extract_response2(response)
+        data = await as_item_scenarios.api_client.extract_response(response)
 
         created_ids.append(data["bookingid"])
         return data
 
     yield _create
 
-    # 🚀 ПАРАЛЛЕЛЬНЫЙ CLEANUP
+    # ПАРАЛЛЕЛЬНЫЙ CLEANUP
     async def delete_one(booking_id):
         try:
             await as_item_scenarios.api_client.as_delete_item(booking_id)

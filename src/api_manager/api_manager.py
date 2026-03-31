@@ -25,13 +25,8 @@ def check_status_decorator(func):
     @wraps(func)
     def sync_wrapper(*args, **kwargs):
         response = func(*args, **kwargs)
-
-        if Credentials.CLIENT == "aiohttp":
-            if response.status != 200:
-                response.raise_for_status()
-        elif Credentials.CLIENT == "httpx":
-            if response.status_code != 200:
-                response.raise_for_status()
+        if response.status_code != 200:
+            response.raise_for_status()
         return response
 
     # Определяем, асинхронная ли функция
@@ -79,20 +74,12 @@ class AsyncItemApiClient:
     @staticmethod
     async def extract_response(response):
         if Credentials.CLIENT == "aiohttp":
-            return await response
-        elif Credentials.CLIENT == "httpx":
-            return response
-        else:
-            raise ValueError(f"Unsupported client type: {Credentials.CLIENT}")
-
-    @staticmethod
-    async def extract_response2(response):
-        if Credentials.CLIENT == "aiohttp":
             return await response.json()
         elif Credentials.CLIENT == "httpx":
             return response.json()
         else:
             raise ValueError(f"Unsupported client type: {Credentials.CLIENT}")
+
 
 class ItemApiClient:
     def __init__(self, auth_session):

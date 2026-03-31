@@ -7,19 +7,13 @@ import asyncio
 class TestBookingScenarios:
 
     def test_get_and_verify(self, item_scenarios):
-        for i in range(1):
-            item_scenarios.get_and_verify_items_exist()
+        item_scenarios.get_and_verify_items_exist()
 
-    def test_create_item_and_delete(self, item_scenarios):
-        booking_data2 = BookingResponseDataModel()
-        for i in range(1):
-            item_scenarios.create_item_and_immediately_delete(item_data=booking_data2)
+    def test_create_item_and_delete(self, item_scenarios, booking_factory):
+        item_scenarios.create_validate_item(booking_factory)
 
-    def test_update_and_get_and_delete(self, item_scenarios):
-        booking_data_create = BookingResponseDataModel()
-        booking_data_update = BookingResponseDataModel()
-        item_scenarios.update_item_and_verify_changes_and_delete(item_data=booking_data_create,
-                                                                 upd_item_data=booking_data_update)
+    def test_update_and_get_and_delete(self, item_scenarios, booking_factory):
+        item_scenarios.update_validate_item(booking_factory)
 
 
 class TestBookingScenariosAsync:
@@ -35,8 +29,8 @@ class TestBookingScenariosAsync:
         await asyncio.gather(*tasks)
 
     @pytest.mark.asyncio
-    async def test_as_update_and_get_and_delete(self, as_item_scenarios, booking_factory_async):
+    async def test_as_update_and_get_and_delete(self, as_item_scenarios, booking_factory_async, ):
         tasks = [
             as_item_scenarios.as_update_item_and_verify(
-                booking_factory_async, upd_item_data=BookingResponseDataModel()) for _ in range(5)]
+                booking_factory_async) for _ in range(10)]
         await asyncio.gather(*tasks)

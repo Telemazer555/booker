@@ -35,7 +35,6 @@ class Credentials:
         if headers_raw is None or headers_raw.strip() == "":
             raise ValueError("HEADERS не найдена или пуста в .env файле")
         HEADERS = json.loads(headers_raw)
-        print("✓ HEADERS успешно загружен")
     except (json.JSONDecodeError, ValueError) as e:
         print("\n" + "=" * 190)
         print(f"❌ ОШИБКА ЗАГРУЗКИ HEADERS: {e}")
@@ -69,7 +68,6 @@ class Credentials:
         if json_body_raw is None or json_body_raw.strip() == "":
             raise ValueError("JSON_BODY не найдена или пуста в .env файле")
         JSON_BODY = json.loads(json_body_raw)
-        print("✓ JSON_BODY успешно загружен")
     except (json.JSONDecodeError, ValueError) as e:
         print("\n" + "=" * 190)
         print(f"❌ ОШИБКА ЗАГРУЗКИ JSON_BODY: {e}")
@@ -101,9 +99,13 @@ class BaseBookingSchemaDataModel(BaseModel):
     lastname: str
     totalprice: int
     depositpaid: bool
-    bookingdates: dict
     bookingdates: BookingDatesDataModel
     additionalneeds: Optional[str] = None
+
+
+class CreateUserSchemaDataModel(BaseModel):
+    bookingid: int
+    booking: BaseBookingSchemaDataModel
 
 
 class BookingResponseDataModel(BaseModel):
@@ -115,11 +117,6 @@ class BookingResponseDataModel(BaseModel):
     additionalneeds: str | None = Field(
         default_factory=lambda: fake.random_element(elements=("breakfast", "dinner", "supper", None))
     )
-
-
-class CreateUserSchemaDataModel(BaseModel):
-    bookingid: int
-    booking: BaseBookingSchemaDataModel
 
 
 def validate_response(response: Response,
